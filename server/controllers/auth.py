@@ -35,14 +35,13 @@ def sign_jwt(user_email: str, user_name: str) -> dict[str, str]:
     return jwt_response(token)
 
 
-def sign_jwt_auth(roll: str, password: str) -> dict[str, str]:
+def sign_jwt_auth(roll: str) -> dict[str, str]:
     """
     Function to Generate The Token
     """
     logger.debug(f"Signing JWT for {roll}")
     payload = {
         "roll_number": roll,
-        "password": password,
     }
     token = JWT.encode(payload=payload, key=jwt_secret, algorithm=jwt_algo)
 
@@ -140,11 +139,24 @@ def test_admin(token: str):
     """
     Test if the user is an admin
     """
-    roll_number = decode_jwt(token)["roll_number"]
-    password = decode_jwt(token)["password"]
-    is_admin = bool(
-        roll_number == settings.admin_roll
-        and password == settings.admin_password
-    )
-    if not is_admin:
-        raise GenericError("Not Admin")
+    try:
+        roll_number = decode_jwt(token)["roll_number"]
+        is_admin = bool(roll_number == settings.admin_roll)
+        if not is_admin:
+            raise GenericError("Not Admin")
+    except Exception as _:
+        raise GenericError("Invalid token")
+
+
+def check_auth(token: str):
+    """
+    Check if token is valid
+    """
+    try:
+        if decode_jwt(token)["roll_number"] == settings.admin_roll:
+            return True
+        return False
+
+    except Exception as _:
+        logger.error(f"Invalid JWT Token: {token}")
+        return False

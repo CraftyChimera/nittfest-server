@@ -67,21 +67,36 @@ def get_events(
     return response
 
 
-def update_events(events_list: list[EventModel], database: Session):
+def update_events(events: EventModel, database: Session):
     """
     Util function to update events
     """
-    for events in events_list:
-        event_data = (
-            database.query(Event).filter_by(name=events.name).first()
-        )
-        if not event_data:
-            raise GenericError("Event Does not exist")
+    event_data = database.query(Event).filter_by(name=events.name).first()
+    if not event_data:
+        raise GenericError("Event Does not exist")
 
-        point_list = (
-            database.query(Point).filter_by(event_id=event_data.id).all()
-        )
+    event_data.description = events.description
+    event_data.rules = events.rules
+    event_data.form_link = events.form_link
+    event_data.event_link = events.event_link
+    event_data.image_link = events.image_link
+    event_data.start_time = events.start_time
+    event_data.end_time = events.end_time
+    event_data.is_reg_completed = events.is_reg_completed
+    event_data.is_event_completed = events.is_event_completed
+    database.commit()
 
+
+def update_points(events: EventModel, database: Session):
+    """
+    Util function to update points
+    """
+    event_data = database.query(Event).filter_by(name=events.name).first()
+    point_list = (
+        database.query(Point).filter_by(event_id=event_data.id).all()
+    )
+
+    if len(events.points) == 3 and len(point_list) == 3:
         for index, item in enumerate(point_list):
             item.point = events.points[index].point
             item.position = events.points[index].position
@@ -94,14 +109,4 @@ def update_events(events_list: list[EventModel], database: Session):
             if department_id is None:
                 raise GenericError("Invalid Department")
             item.department_id = department_id
-
-        event_data.description = events.description
-        event_data.rules = events.rules
-        event_data.form_link = events.form_link
-        event_data.event_link = events.event_link
-        event_data.image_link = events.image_link
-        event_data.start_time = events.start_time
-        event_data.end_time = events.end_time
-        event_data.is_reg_completed = events.is_reg_completed
-        event_data.is_event_completed = events.is_event_completed
-        database.commit()
+    database.commit()

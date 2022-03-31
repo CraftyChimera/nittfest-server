@@ -99,10 +99,7 @@ def event_jwt(response: LoginRequestModel):
         response.roll_number == settings.admin_roll
         and response.password == settings.admin_password
     ):
-        jwt_res = sign_jwt_auth(
-            roll=response.roll_number, password=response.password
-        )
-        print(jwt_res)
+        jwt_res = sign_jwt_auth(roll=response.roll_number)
         return AdminResponseModel(
             isAuthorized=True, jwt_token=jwt_res["jwt_token"]
         )
